@@ -16,7 +16,7 @@ local_path = "./leadChatBotDocument/"
 async def download_All_CSV_Files_to_local_path():
     if not os.path.exists(local_path):
         os.makedirs(local_path)
-        return JSONResponse(content="Created {local_path} in your system", status_code=200)
+        print(JSONResponse(content="Created {local_path} in your system", status_code=200))
     else:
         print(f"Already existed {local_path} in your system, download all files")
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -35,7 +35,7 @@ async def download_All_CSV_Files_to_local_path():
         with open(csv_file_name,'w',encoding='utf-8',newline='') as file:
             writer = csv.writer(file)
             writer.writerows(all_data)
-    return JSONResponse(content="Done download all Documents into local path!",status_code=200)
+    print(JSONResponse(content="Done download all Documents into local path!",status_code=200))
 '''
 This is my document_id: d66be3e8-b010-4f3f-aefb-299c4ffa8cbd
 This is name of document: Tư vấn Retail.csv
@@ -56,6 +56,7 @@ This is name of document: Bảng giá fnb.csv
 async def upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID):
     #! duyệt toàn bộ file để update lên:
     filenames = os.listdir(local_path)
+    
     async with httpx.AsyncClient(timeout=10.0) as client:
         for filename in filenames:
             if not filename.endswith(".csv"): continue
@@ -93,8 +94,9 @@ async def upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT
                 'file': open(filePath, 'rb')
             }
             try:
-                    response = await client.post(url = url, headers= header, files = files)
-                    print(JSONResponse(content=response))
+                response = await client.post(url = url, headers= header, files = files)
+                response.raise_for_status()
+                print(JSONResponse(content=response.json()))
             except httpx.TimeoutException as timeout:
                 return JSONResponse(content=f"Timeout error: {timeout}")
             except httpx.HTTPError as httpError:

@@ -1,0 +1,2 @@
+pip install gspread==6.2.1
+pip install oauth2client== 4.1.3
