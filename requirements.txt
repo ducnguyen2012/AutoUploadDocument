@@ -1,2 +1,5 @@
-pip install gspread==6.2.1
-pip install oauth2client== 4.1.3
+gspread==6.2.1
+oauth2client==4.1.3
+fastapi==0.115.13
+python-dotenv==1.1.0
+httpx==0.28.1
