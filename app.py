@@ -7,11 +7,14 @@ import json
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+
+#! ============================================================ loading all keys related  ===============================================================
+
 load_dotenv()
 app = FastAPI()
-
 API_KEY = os.getenv("API_KEY_KB")
 local_path = "./leadChatBotDocument/"
+
 #! ============================================================ download all csv file to local path =======================================================
 async def download_All_CSV_Files_to_local_path():
     if not os.path.exists(local_path):
@@ -36,6 +39,8 @@ async def download_All_CSV_Files_to_local_path():
             writer = csv.writer(file)
             writer.writerows(all_data)
     print(JSONResponse(content="Done download all Documents into local path!",status_code=200))
+
+
 '''
 This is my document_id: d66be3e8-b010-4f3f-aefb-299c4ffa8cbd
 This is name of document: Tư vấn Retail.csv
@@ -107,7 +112,9 @@ async def upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT
                 return JSONResponse(content=f"Network Error: {networkError}")
             except httpx.ConnectError as connectError:
                 return JSONResponse(content=f"Connection Error: {connectError}")
-            print(JSONResponse(content="Done udpate all Documents in Dify",status_code=200))
+    return JSONResponse(content="Done udpate all Documents in Dify",status_code=200)
+
+#! ============================================================= main function ============================================
 @app.post('/api/lead/chat/updateDocument')
 async def updateDocument():
 
