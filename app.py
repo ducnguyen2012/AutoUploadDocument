@@ -19,7 +19,7 @@ local_path = "./leadChatBotDocument/"
 async def download_All_CSV_Files_to_local_path():
     if not os.path.exists(local_path):
         os.makedirs(local_path)
-        print(JSONResponse(content="Created {local_path} in your system", status_code=200))
+        print("Created f{local_path} in your system")
     else:
         print(f"Already existed {local_path} in your system, download all files")
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -38,7 +38,7 @@ async def download_All_CSV_Files_to_local_path():
         with open(csv_file_name,'w',encoding='utf-8',newline='') as file:
             writer = csv.writer(file)
             writer.writerows(all_data)
-    print(JSONResponse(content="Done download all Documents into local path!",status_code=200))
+    print("Done download all Documents into local path!")
 
 
 '''
@@ -101,7 +101,7 @@ async def upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT
             try:
                 response = await client.post(url = url, headers= header, files = files)
                 response.raise_for_status()
-                print(JSONResponse(content=response.json()))
+                print(response.json())
             except httpx.TimeoutException as timeout:
                 return JSONResponse(content=f"Timeout error: {timeout}")
             except httpx.HTTPError as httpError:
