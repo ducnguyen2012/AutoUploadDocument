@@ -58,7 +58,111 @@ This is name of document: Bảng giá fnb.csv
 #! ============================== update dictionary ===============================
 
 
+
+async def retrieve_chunk_from_knowledge_base_get_chunk_id(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID):
+    '''
+    curl --location --request GET 'https://dify.sapocorp.vn/v1/datasets/{dataset_id}/documents/{document_id}/segments' \
+    --header 'Authorization: Bearer {api_key}' \
+    --header 'Content-Type: application/json'
+    '''
+    header = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    filenames = os.listdir(local_path)
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for filename in filenames:
+            if not filename.endswith(".csv"): continue
+            document_id = dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID.get(filename)
+            url = f"https://dify.sapocorp.vn/v1/datasets/aa75acc4-f2ce-41c1-9671-c4d249d1cbdd/documents/{document_id}/segments"
+            try:
+                response = await client.get(url=url,headers=header)
+                data = response.json()
+                for i in range(len(data.get("data"))):
+                    #! delete all chunk!
+                    response_delete = await client.delete(url=url+"/"+data["data"][i]["id"],headers=header)
+                response.raise_for_status()
+                response_delete.raise_for_status()
+                print(f"This is response in get chunk id: {response}")
+            except httpx.TimeoutException as timeout:
+                return JSONResponse(content=f"Timeout error: {timeout}")
+            except httpx.HTTPError as httpError:
+                return JSONResponse(content=f"HTTP Error: {httpError}")
+            except httpx.ConnectError as connectError:
+                return JSONResponse(content=f"Connect Error: {connectError}")
+            except httpx.NetworkError as networkError:
+                return JSONResponse(content=f"Network Error: {networkError}")
+            except Exception as e:
+                return JSONResponse(content=f"Unexpected Error: {connectError}")
+                
+
+
+async def upload_all_csv_chunk_in_each_file_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID):
+    '''
+    curl --location --request POST 'https://dify.sapocorp.vn/v1/datasets/{dataset_id}/documents/{document_id}/segments' \
+    --header 'Authorization: Bearer {api_key}' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{"segments": [{"content": "1","answer": "1","keywords": ["a"]}]}'
+    '''
+    filenames = os.listdir(local_path)
+    header = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for filename in filenames:
+            if not filename.endswith(".csv"): continue
+
+            document_id = dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID.get(filename) 
+            print(f"This is my document id: {document_id}")
+
+            url_upload = f"https://dify.sapocorp.vn/v1/datasets/aa75acc4-f2ce-41c1-9671-c4d249d1cbdd/documents/{document_id}/segments" 
+            with open(os.path.join(local_path,filename), 'r',encoding='utf8') as file: 
+                reader_object = csv.reader(file)
+
+                next(reader_object,None) #! this line to skip first line in each csv
+
+                for row in reader_object:
+                    '''
+                    extract content as cau tra loi, and keyword as cau hoi
+                    '''
+                    #! o object dau tien, toan bo string se duoc split boi delimiter
+                    print(f"This is my row: {row}")
+                    question = row[0]
+                    keyword_list = question.split(",")
+                    answer = row[1]
+
+                    print(f"This is my keyword_list: {keyword_list}")
+                    print(f"This is my answer: {answer}")
+                    data = {
+                        "segments": [
+                            {
+                                "content": answer,
+                                "answer": "This is answer field in segments",
+                                "keywords": keyword_list
+                            }
+                        ]
+                    }
+                    try:
+                        response = await client.post(url=url_upload,headers=header,json=data)
+                        response.raise_for_status()
+                        #print(f"This is my response: {response}")
+                    except httpx.TimeoutException as timeout:
+                        return JSONResponse(content=f"Timeout error: {timeout}")
+                    except httpx.HTTPError as httpError:
+                        return JSONResponse(content=f"HTTP Error: {httpError}")
+                    except httpx.ConnectError as connectError:
+                        return JSONResponse(content=f"Connect Error: {connectError}")
+                    except httpx.NetworkError as networkError:
+                        return JSONResponse(content=f"Network Error: {networkError}")
+                    except Exception as e:
+                        return JSONResponse(content=f"Unexpected Error: {connectError}")
+
+
+
 async def upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID):
+    
     #! duyệt toàn bộ file để update lên:
     filenames = os.listdir(local_path)
     
@@ -131,8 +235,15 @@ async def updateDocument():
     "Bảng giá Retail.csv": "af366da2-b217-41b7-9411-f8b99b23627b",
     "Bảng giá fnb.csv": "e7ca0074-c9b8-4cf9-8f6c-8ba05ec543c3"
     }
+    # 
+    # await upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID)
+    #await upload_all_csv_chunk_in_each_file_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID)
+
+    #1 read a csv file: 
+    
     await download_All_CSV_Files_to_local_path()
-    await upload_All_CSV_FILE_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID)
+    await retrieve_chunk_from_knowledge_base_get_chunk_id(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID)
+    await upload_all_csv_chunk_in_each_file_to_Dify(dictionary_map_DOCUMENT_NAME_with_DOCUMENT_ID)
     return JSONResponse(content=f"Process done in download all CSV files and update all CSV files",status_code=200)
 
 
